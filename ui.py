@@ -1,8 +1,7 @@
 from tkinter import *
 from tkinter import messagebox
-import xml.etree.ElementTree as ET
-import xmltodict
-import zipfile
+import combatflite_reader
+import theway_formatter
 import os
 
 
@@ -44,50 +43,31 @@ class Interface:
 
     def convert(self):
 
+        reader = combatflite_reader.CombatFliteReader()
+
         cf_file_path = self.cf_filename.get()
 
         try:
-            with zipfile.ZipFile(f'CF_File/{cf_file_path}.cf') as zip_ref:
-                zip_ref.extractall("Extracted_CF")
+
+            reader.unzipper(cf_file_path)
+
         except FileNotFoundError:
+
             messagebox.showerror(title="File Not Found", message="The file you have entered does not exist. Please"
                                                                  " make sure that your .cf file is in the CF_File"
                                                                  " directory.")
         else:
-            tree = ET.parse('Extracted_CF/mission.xml')
-            myroot = tree.getroot()
-            xmlstr = ET.tostring(myroot, encoding='utf-8', method='xml')
 
-            data_dict = dict(xmltodict.parse(xmlstr))
+            formatter = theway_formatter.TheWayFormatter()
+
+            data_dict = reader.xml_parser()
 
             flight_names = []
             flight_waypoints = []
 
-            for n in data_dict['Mission']['Routes']['Route']:
-                flight_names.append(n['Name'])
-                waypoint_num = 0
-                each_flight_waypoints = []
-                for x in n['Waypoints']['Waypoint']:
-                    lat = x['Lat']
-                    lon = x['Lon']
-                    elev = float(x['Altitude']) * 0.3048
-                    waypoint_num += 1
-                    waypoint_dict = {
-                        "id": waypoint_num,
-                        "name": f"Waypoint {waypoint_num}",
-                        "lat": lat,
-                        "long": lon,
-                        "elev": elev
-                    }
-                    each_flight_waypoints.append(waypoint_dict)
-                flight_waypoints.append(each_flight_waypoints)
+            formatter.lists_creator(data_dict, flight_names, flight_waypoints)
 
-            for n in range(len(flight_names)):
-                with open(f"TW_Files/{flight_names[n]}.tw", mode='w') as file:
-                    waypoint_string = str(flight_waypoints[n])
-                    joined = waypoint_string.replace(" ", "")
-                    apostrophe_replaced = joined.replace("'", '"')
-                    file.write(f"{apostrophe_replaced}")
+            formatter.file_writer(flight_names, flight_waypoints)
 
             messagebox.showinfo(title="Files Converted",
                                 message="Your CombatFlite file has been converted. You can find "
