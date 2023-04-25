@@ -1,7 +1,7 @@
 # CombatFlite-to-TheWay-Converter
 Converts your flight plan from CombatFlite to files which can be used by TheWay to stick your flight plans into your jet in DCS.
 
-3 directories need to be created - this program does not do so automatically. These directories go in the root folder.
+3 directories need to be created - this program does not do so automatically (I have pre-created these in the release version). These directories go in the root folder.
 
 CF_File
 Extracted_CF
